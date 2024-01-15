@@ -25,17 +25,21 @@ class SchemaExample(WebUrl):
         }
     }
 
-@app.post("/scrape-web", response_model=SchemaExample)
+@app.post("/scrape-web")
 async def web_scrape(url: WebUrl= Body(..., embed=True)):
 
     # import pdb
     # pdb.set_trace()
-    
-    page = requests.get(str(url.url))
+    try:
+        page = requests.get(str(url.url))
 
-    soup = BeautifulSoup(page.text, "html.parser")
-    title = soup.head.title.text
+        soup = BeautifulSoup(page.text, "html.parser")
+        title = soup.head.find("title").text if soup.head.find("title").text else "NaN"
+        image = soup.head.find("meta", attrs={"itemprop":"image"}).get("content")
 
-    return {
-        "name":title
-    }
+        return {
+            "name":title, 
+            "image":image
+        }
+    except ConnectionError:
+        return "Site not found"
